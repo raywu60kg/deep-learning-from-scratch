@@ -2,3 +2,4 @@
 .python-version
 train-images-idx3-ubyte
 train-labels-idx1-ubyte
+src/__pycache__/
