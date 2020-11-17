@@ -1,4 +1,4 @@
-from src.operations.convolution import Cov1d, Cov2d, Cov3d
+from src.operations.convolution import Conv1d, Conv2d, Conv3d
 import numpy as np
 
 
@@ -9,9 +9,9 @@ class TestConvolution:
 
     def test_cov2d_padding_input(self):
         print(tuple(map(lambda x: x+1, (1,2))))
-        res = Cov2d.padding_input(
-            input=np.array([range(9)]).reshape([3, 3]),
+        res = Conv2d.get_padding_input(
+            input_tensor=np.array([range(9)]).reshape([3, 3]),
             filter_size=[2, 2],
             stride=1)
-        print(res)
+        print(res, np.shape(res))
         assert 1 == 2

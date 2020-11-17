@@ -1,8 +1,9 @@
 from src.operations.operation import Operation
+import math
 import numpy as np
 
 
-class Cov1d(Operation):
+class Conv1d(Operation):
     def __init__(self, input, padding, stride, filter_size, name, initializer):
         self.input = input
         self.padding = padding
@@ -28,14 +29,27 @@ class Cov1d(Operation):
         pass
 
 
-class Cov2d(Operation):
-    def __init__(self, input, padding, stride, filter_size, name, initializer):
+class Conv2d(Operation):
+    # https://d2l.ai/chapter_convolutional-neural-networks/padding-and-strides.html
+    def __init__(
+            self,
+            input_tensor,
+            padding,
+            stride,
+            filter_size,
+            name,
+            initializer):
         "padding can be 'SAME' or 'VALID'"
-        if padding == 'VALID':
-            self.padding_input = self.get_padding_input(input)
+        if padding == 'SAME':
+            self.padding_input = self.get_padding_input(
+                input_tensor=input_tensor,
+                filter_size=filter_size,
+                stride=stride)
+        elif padding == "VALID":
+
+            self.padding_input = input_tensor
         else:
-            self.padding_input = input
-        self.padding = padding
+            raise ValueError("Padding should be 'SAME' or 'VALID'")
         self.stride = stride
         self.filter_size = filter_size
         self.name = name
@@ -47,6 +61,7 @@ class Cov2d(Operation):
 
     def get_output(self):
         # calculate output shape
+
         #  input_size + 2 * padding_size-(filter_size-1)
 
         # fill the output
@@ -56,18 +71,30 @@ class Cov2d(Operation):
         pass
 
     @staticmethod
-    def padding_input(input, filter_size, stride):
-        # assume filter_size is square
-        # padding_size = (filter_size-1) / 2
-        padding_shape = (filter_size[0]-1)/2
-        tmp = tuple(map(lambda x: x+padding_shape, np.shape(input)))
-        print("@@@@", tmp)
-        paddding_input = np.zeros(tmp)
-        paddding_input[padding_shape:, padding_shape:] = input
+    def get_padding_input(input_tensor, filter_size, stride):
 
-        return padding_shape
+        if min(filter_size) < 1:
+            raise ValueError("filter_size should greater than zero")
+
+        # compute padding shape
+        extend_shape = [x - 1 for x in filter_size]
+        padding_shape = [
+            x+y for x, y in zip(
+                extend_shape, np.shape(input_tensor))]
+        padding_result = np.zeros(padding_shape)
+
+        # padding the input
+        input_tensor_loc = []
+        for x, y in zip(extend_shape, padding_shape):
+            if x % 2 == 0:
+                input_tensor_loc.append(slice(x/2, y-x/2))
+            else:
+                input_tensor_loc.append(slice(math.ceil(x/2), y-math.floor(x/2)))
+        padding_result[input_tensor_loc] = input_tensor
+
+        return padding_result
 
 
-class Cov3d(Operation):
+class Conv3d(Operation):
     # TODO
     pass
