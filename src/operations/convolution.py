@@ -43,8 +43,7 @@ class Conv2d(Operation):
         if padding == 'SAME':
             self.padding_input = self.get_padding_input(
                 input_tensor=input_tensor,
-                filter_size=filter_size,
-                stride=stride)
+                filter_size=filter_size)
         elif padding == "VALID":
 
             self.padding_input = input_tensor
@@ -55,23 +54,25 @@ class Conv2d(Operation):
         self.name = name
         self.initializer = initializer
         if initializer == "random_normal":
-            self.filter = np.random.randn(filter_size)
+            self.filter = np.random.randn(sum(filter_size)).reshape(filter_size)
         else:
-            self.filter = np.random.randn(filter_size)
+            self.filter = np.random.randn(sum(filter_size)).reshape(filter_size)
 
-    def get_output(self):
+    def get_output_tensor(self):
         # calculate output shape
-
+        output_tensor_shape = [math.floor((n-k+s/s)) for n, k, s in zip(
+            np.shape(self.padding_input), self.filter_size, self.stride)]
+        output_tensor = np.zeros(output_tensor_shape)
         #  input_size + 2 * padding_size-(filter_size-1)
 
         # fill the output
-        pass
+        return output_tensor
 
     def get_gradient(self):
         pass
 
     @staticmethod
-    def get_padding_input(input_tensor, filter_size, stride):
+    def get_padding_input(input_tensor, filter_size):
 
         if min(filter_size) < 1:
             raise ValueError("filter_size should greater than zero")
@@ -89,7 +90,8 @@ class Conv2d(Operation):
             if x % 2 == 0:
                 input_tensor_loc.append(slice(x/2, y-x/2))
             else:
-                input_tensor_loc.append(slice(math.ceil(x/2), y-math.floor(x/2)))
+                input_tensor_loc.append(
+                    slice(math.ceil(x/2), y-math.floor(x/2)))
         padding_result[input_tensor_loc] = input_tensor
 
         return padding_result
