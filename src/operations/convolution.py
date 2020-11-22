@@ -54,24 +54,56 @@ class Conv2d(Operation):
         self.name = name
         self.initializer = initializer
         if initializer == "random_normal":
-            self.filter = np.random.randn(sum(filter_size)).reshape(filter_size)
+            self.filter = np.random.randn(
+                sum(filter_size)).reshape(filter_size)
         else:
-            self.filter = np.random.randn(sum(filter_size)).reshape(filter_size)
+            self.filter = np.random.randn(
+                sum(filter_size)).reshape(filter_size)
 
     def get_output_tensor(self):
         # calculate output shape
         output_tensor_shape = [math.floor((n-k+s/s)) for n, k, s in zip(
             np.shape(self.padding_input), self.filter_size, self.stride)]
         output_tensor = np.zeros(output_tensor_shape)
-        #  input_size + 2 * padding_size-(filter_size-1)
 
+        # convolution
         # fill the output
+        current_step = [0, 0]
+        print("@@", output_tensor_shape)
+        for ix in range(output_tensor_shape[0]):
+            current_step[1] = 0
+            for iy in range(output_tensor_shape[1]):
+
+                # print(ix, iy)
+                # print(self.padding_input[
+                #     slice(current_step[0], current_step[0]+self.filter_size[0]),
+                #     slice(current_step[1], current_step[1]+self.filter_size[1])])
+                # print(self.filter)
+                # print(current_step)
+                # print(np.sum(np.multiply(
+                #     self.filter,
+                #     self.padding_input[
+                #         slice(current_step[0],
+                #               current_step[0]+self.filter_size[0]),
+                #         slice(current_step[1], current_step[1]+self.filter_size[1])])))
+                output_tensor[ix, iy] = np.sum(
+                    np.multiply(
+                        self.filter,
+                        self.padding_input[
+                            slice(
+                                current_step[0],
+                                current_step[0]+self.filter_size[0]),
+                            slice(
+                                current_step[1],
+                                current_step[1]+self.filter_size[1])]))
+                current_step[1] += self.stride[1]
+            current_step[0] += self.stride[0]
         return output_tensor
 
     def get_gradient(self):
         pass
 
-    @staticmethod
+    @ staticmethod
     def get_padding_input(input_tensor, filter_size):
 
         if min(filter_size) < 1:
